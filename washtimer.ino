@@ -271,14 +271,15 @@ void loop()
   readButtons();
 
   if(timerActive) {
+
     digitalWrite(LED1, HIGH);
 
-    /* todo: kleiner gleich bei hour raus im zweiten if */
-    if( 
-      (hour >= wtimer.hour && minute >= wtimer.minute)
-      && 
-      (hour <= wtimer.hour+Programm[activeProgramm].hours && minute < wtimer.minute+Programm[activeProgramm].minutes)
-    ) {
+    int runTimeMin = Programm[activeProgramm].hours*60+Programm[activeProgramm].minutes;
+    int startTimeMin = wtimer.hour*60+wtimer.minute;
+    int endTimeMin   = startTimeMin+runTimeMin;
+    int nowTimeMin   = hour*60+minute;
+
+    if(nowTimeMin >= startTimeMin && nowTimeMin <= endTimeMin) {
       digitalWrite(LED2, HIGH);
     } else {
       digitalWrite(LED2, LOW);
