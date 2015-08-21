@@ -1,8 +1,12 @@
 #include <LiquidCrystal.h>
+#include <Wire.h>
+#define DS1307_I2C_ADDRESS 0x68
 
 #define BUTTON1_PIN 6  // Button 1
 #define BUTTON2_PIN 7  // Button 2
 #define BUTTON3_PIN 8  // Button 2
+
+#define START_PIN 9 
 
 #define LED1 5
 #define LED2 4
@@ -48,17 +52,17 @@ struct dauer_t {
 };
 
 static dauer_t Programm[3] = {
-          {2,10, "Kurzwaesche"},
+          {1,20, "Kurzwaesche"},
           {1,05, "Buntwäsche"},
-          {3,40, "Kurzwaesche"}
+          {3,40, "Ku"}
         };
 
-static int activeProgramm = 2;
+static int activeProgramm = 0;
 static int i = -1;
 static int j = 0;
 static int activePage = 0;
 static bool timerActive = false;
-static wtimer_t wtimer = {14,30};
+static wtimer_t wtimer = {12,52};
 static int b = 0;
 static int timerMode = 0;
 
@@ -208,7 +212,10 @@ void setup() {
 
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
+  pinMode(START_PIN, OUTPUT);
   
+  Wire.begin();
+
   lcd.createChar(0, alarm);
   lcd.begin(16, 2);
 //  lcd.print("hello, world! ");
@@ -258,20 +265,78 @@ void readButtons() {
 
 void loop()
 {
+  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+  getDateDs1307(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+
   readButtons();
+
+  if(timerActive) {
+    digitalWrite(LED1, HIGH);
+
+    /* todo: kleiner gleich bei hour raus im zweiten if */
+    if( 
+      (hour >= wtimer.hour && minute >= wtimer.minute)
+      && 
+      (hour <= wtimer.hour+Programm[activeProgramm].hours && minute < wtimer.minute+Programm[activeProgramm].minutes)
+    ) {
+      digitalWrite(LED2, HIGH);
+    } else {
+      digitalWrite(LED2, LOW);
+    }
+
+  } else {
+    digitalWrite(LED1, LOW);
+  }
+
+
+  if(activePage == 0 && 1 == 0)
+  {
+    lcd.setCursor(3,1);
+    lcd.print(hour);
+    lcd.print(":");
+    if(minute < 10) lcd.print(0);
+    lcd.print(minute);
+    lcd.print(":");
+    if(second < 10) lcd.print(0);
+    lcd.print(second);
+  }
+  
 
   if(i != activePage) {
     displayMenu(activePage);
     i=activePage;
   }
-
-  if(timerActive) {
-    digitalWrite(LED1, HIGH);
-  } else {
-    digitalWrite(LED1, LOW);
-  }
 }
 
 void displayMenu(int page) {
   Pages[page].Draw();
+}
+
+void getDateDs1307(byte *second, byte *minute,byte *hour,byte *dayOfWeek,byte *dayOfMonth,byte *month, byte *year)
+{
+ // Reset the register pointer
+ Wire.beginTransmission(DS1307_I2C_ADDRESS);
+ Wire.write(0);
+ Wire.endTransmission();
+ 
+ Wire.requestFrom(DS1307_I2C_ADDRESS, 7);
+ 
+ // A few of these need masks,, because certain bits are control bits
+ *second = bcdToDec(Wire.read() & 0x7f);
+ *minute = bcdToDec(Wire.read());
+ *hour = bcdToDec(Wire.read() & 0x3f); // 0x3f == 24 h --  0x1f == 12h Need to change this if 12 hour am/pm
+ *dayOfWeek = bcdToDec(Wire.read());
+ *dayOfMonth = bcdToDec(Wire.read());
+ *month = bcdToDec(Wire.read());
+ *year = bcdToDec(Wire.read());
+}
+
+byte bcdToDec(byte val)
+{
+ return ( (val/16*10) + (val%16) );
+}
+
+byte decToBcd(byte val)
+{
+ return ( (val/10*16) + (val%10) );
 }
