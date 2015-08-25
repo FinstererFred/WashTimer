@@ -1,3 +1,6 @@
+#include <avr/io.h> 
+#include <avr/interrupt.h>
+
 #include <LiquidCrystal.h>
 #include <Wire.h>
 #define DS1307_I2C_ADDRESS 0x68
@@ -52,35 +55,37 @@ struct dauer_t {
 };
 
 static dauer_t Programm[3] = {
-          {1,20, "Kurzwaesche"},
+          {0,2, "P1"},
           {1,05, "Buntwäsche"},
           {3,40, "Ku"}
         };
 
-static int activeProgramm = 0;
-static int i = -1;
-static int j = 0;
-static int activePage = 0;
-static bool timerActive = false;
-static wtimer_t wtimer = {12,52};
-static int b = 0;
-static int timerMode = 0;
+volatile int activeProgramm = 0;
+volatile int i = -1;
+volatile int j = 0;
+volatile int activePage = 0;
+volatile bool timerActive = false;
+volatile wtimer_t wtimer = {12,52};
+volatile int b = 0;
+volatile int timerMode = 0;
+volatile bool running = false;
+volatile bool stateChanged = false;
 
 /* page 1 - startseite */
   void page0_plus() {
-    if(activePage <= 1) {
+    if (activePage <= 1) {
       activePage++;
     }
   }
 
   void page0_minus() {
-    if(activePage > 0) {
+    if (activePage > 0) {
       activePage--;
     }
   }
 
   void page0_enter() {
-    if(timerActive == false) {
+    if (timerActive == false) {
       timerActive = true;
     } else {
       timerActive = false;
@@ -98,14 +103,14 @@ static int timerMode = 0;
 
 /* page 2 - timer stellen */
   void page1_plus() {
-    if(timerMode == 0) {
-      if(wtimer.hour < 23) {
+    if (timerMode == 0) {
+      if (wtimer.hour < 23) {
         wtimer.hour++;
       } else {
         wtimer.hour = 0;
       }
     } else {
-      if(wtimer.minute < 59) {
+      if (wtimer.minute < 59) {
         wtimer.minute++;
       } else {
         wtimer.minute = 0;
@@ -115,14 +120,14 @@ static int timerMode = 0;
   }
 
   void page1_minus() {
-    if(timerMode == 0) {
-      if(wtimer.hour > 0) {
+    if (timerMode == 0) {
+      if (wtimer.hour > 0) {
         wtimer.hour--;
       } else {
         wtimer.hour = 23;
       }
     } else {
-      if(wtimer.minute > 0) {
+      if (wtimer.minute > 0) {
         wtimer.minute--;
       } else {
         wtimer.minute = 59;
@@ -142,14 +147,14 @@ static int timerMode = 0;
 
 
 static page_t Pages[2] = {
-        {"startseite",0,0,0, &page0_draw, &page0_plus, &page0_minus, &page0_enter},
+        {"startseite",0,0,0, &page0_draw, &page0_plus, &page0_minus, &page0_enter, &page0_longEnter},
         {"timer stellen",0,0,0, &page1_draw, &page1_plus, &page1_minus, &page1_enter, &page1_longEnter}
       };
 
 
   void page1_enter() {
     /* change timer digit */
-    if(timerMode == 0) {
+    if (timerMode == 0) {
       timerMode = 1;
     } else {
       timerMode = 0;
@@ -161,7 +166,7 @@ void page0_draw() {
 
     int doneHour = wtimer.hour+Programm[activeProgramm].hours;
     int doneMinute = 0;
-    if(wtimer.minute+Programm[activeProgramm].minutes >= 60)
+    if (wtimer.minute+Programm[activeProgramm].minutes >= 60)
     {
       doneHour++;
       doneMinute = wtimer.minute+Programm[activeProgramm].minutes - 60;
@@ -169,13 +174,20 @@ void page0_draw() {
       doneMinute = wtimer.minute+Programm[activeProgramm].minutes;
     }
 
-  
-  lcd.setCursor(Pages[activePage].posX, Pages[activePage].posY);
-  char lcd_buffer[130];
-  sprintf(lcd_buffer,"%02i:%02i -> %02i:%02i ",wtimer.hour, wtimer.minute, doneHour, doneMinute);
-  lcd.print(lcd_buffer);
 
-  if(timerActive == true) {
+  if (!running) {
+    lcd.setCursor(Pages[activePage].posX, Pages[activePage].posY);
+    char lcd_buffer[130];
+    sprintf(lcd_buffer,"%02i:%02i  > %02i:%02i ",wtimer.hour, wtimer.minute, doneHour, doneMinute);
+    lcd.print(lcd_buffer);
+  } else {
+    lcd.setCursor(Pages[activePage].posX, Pages[activePage].posY);
+    char lcd_buffer[130];
+    sprintf(lcd_buffer,"       > %02i:%02i ", doneHour, doneMinute);
+    lcd.print(lcd_buffer);
+  }
+
+  if (timerActive == true) {
     lcd.write(byte(0));
   }
   else
@@ -203,9 +215,17 @@ void page1_draw() {
 /*****************************************/
 /* ende    */
 
-
-
 void setup() {
+
+  cli(); // stop interrupts while we meddle with the clocks
+  TCNT1=0x0000; // reset counter to 0 at start
+  TCCR1A= B00000000; // turn off PWM
+  TCCR1B= B00001100; // set CTC on and prescalar to /256
+  TIMSK1 |= _BV(OCIE1A) ; // enable timer compare A interrupt
+  OCR1A = 62499; //set the comparator A to trigger at 1 second
+  sei(); //start interrupts again
+
+
   pinMode(BUTTON1_PIN, INPUT);
   pinMode(BUTTON2_PIN, INPUT);
   pinMode(BUTTON3_PIN, INPUT);
@@ -218,8 +238,6 @@ void setup() {
 
   lcd.createChar(0, alarm);
   lcd.begin(16, 2);
-//  lcd.print("hello, world! ");
-//  lcd.write(byte(0));
 }
 
 int button(int pinNr) {
@@ -231,9 +249,9 @@ int button(int pinNr) {
 //  lcd.setCursor(0, 1);
 //  lcd.print(ElapsedTime);
  
-  if (ElapsedTime >= 201UL) {
+  if (ElapsedTime >= 401UL) {
     return 2;
-  } else if (ElapsedTime >= 20UL && ElapsedTime <= 200UL) {
+  } else if (ElapsedTime >= 20UL && ElapsedTime <= 400UL) {
     return 1;
   } else {
     return 0;
@@ -247,21 +265,29 @@ void readButtons() {
   int ret2 = button(BUTTON2_PIN);
   int ret3 = button(BUTTON3_PIN);
   
-  if(ret1 == 1 || ret1 == 2) {
+  if (ret1 == 1 || ret1 == 2) {
     Pages[activePage].Plus();
   }
 
-  if(ret2 == 1) {
+  if (ret2 == 1) {
     Pages[activePage].Enter(); 
-  } else if(ret2 == 2) {
+  } else if (ret2 == 2) {
     Pages[activePage].LongEnter();
   }
 
-  if(ret3 == 1 || ret3 == 2) {
+  if (ret3 == 1 || ret3 == 2) {
     Pages[activePage].Minus(); 
   }
 
 }
+
+int semaRunning = 0;
+int semaNotRunning = 0;
+
+int runningTimeMin = 0;
+int runningTimeSec = 60;
+
+unsigned long locTime = 0;
 
 void loop()
 {
@@ -270,40 +296,66 @@ void loop()
 
   readButtons();
 
-  if(timerActive) {
-
-    digitalWrite(LED1, HIGH);
-
-    int runTimeMin = Programm[activeProgramm].hours*60+Programm[activeProgramm].minutes;
-    int startTimeMin = wtimer.hour*60+wtimer.minute;
-    int endTimeMin   = startTimeMin+runTimeMin;
-    int nowTimeMin   = hour*60+minute;
-
-    if(nowTimeMin >= startTimeMin && nowTimeMin <= endTimeMin) {
-      digitalWrite(LED2, HIGH);
-    } else {
-      digitalWrite(LED2, LOW);
-    }
-
-  } else {
-    digitalWrite(LED1, LOW);
-  }
-
-
-  if(activePage == 0 && 1 == 0)
-  {
-    lcd.setCursor(3,1);
-    lcd.print(hour);
-    lcd.print(":");
-    if(minute < 10) lcd.print(0);
-    lcd.print(minute);
-    lcd.print(":");
-    if(second < 10) lcd.print(0);
-    lcd.print(second);
-  }
+  if (timerActive) digitalWrite(LED1, HIGH);
+  else digitalWrite(LED1, LOW);
   
 
-  if(i != activePage) {
+  int runTimeMin   = Programm[activeProgramm].hours*60 + Programm[activeProgramm].minutes;
+  int startTimeMin = wtimer.hour*60 + wtimer.minute;
+  int endTimeMin   = startTimeMin + runTimeMin;
+  int nowTimeMin   = hour*60 + minute;
+
+/* pruefen ob waschmaschine gestartet werden muss */
+  if (nowTimeMin >= startTimeMin && nowTimeMin < endTimeMin) {
+    if (!running && timerActive) {
+      running = true;
+      semaRunning++;
+    }
+  } else {
+    if (running) {
+      running = false;
+      semaNotRunning++;
+    }
+  }
+
+/* aktionen nur einmal starten */  
+  if (running && semaRunning == 1) {
+    digitalWrite(LED2, HIGH);
+    locTime = millis() / 1000;
+    runningTimeMin = runTimeMin-1;
+    
+    timerActive = false;
+    i = -1;
+    semaRunning = 0;
+  }
+  
+  if (!running && semaNotRunning == 1) {
+    digitalWrite(LED2, LOW);
+    i = -1;
+    semaNotRunning = 0;
+  }
+
+  if(running)
+  {
+    displayCountdown();
+  }
+
+/* debug */  
+  if (activePage == 0 && 1 == 1)
+  {
+    lcd.setCursor(0,1);
+    lcd.print(hour);
+    lcd.print(":");
+    if (minute < 10) lcd.print(0);
+    lcd.print(minute);
+    lcd.print(":");
+    if (second < 10) lcd.print(0);
+    lcd.print(second);
+  }
+
+
+
+  if (i != activePage) {
     displayMenu(activePage);
     i=activePage;
   }
@@ -311,6 +363,36 @@ void loop()
 
 void displayMenu(int page) {
   Pages[page].Draw();
+}
+
+unsigned long oldSec = 0;
+
+
+volatile int tescht = 0;
+
+ISR(TIMER1_COMPA_vect) {
+
+  if(running) {
+    runningTimeSec--;
+
+    if(runningTimeSec <= 0 && runningTimeMin > 0)
+    {
+      runningTimeMin--;
+      runningTimeSec = 60;
+    }
+  }
+}
+
+
+void displayCountdown()
+{
+    lcd.setCursor(0,0); 
+    if(runningTimeSec < 100)lcd.print("0");
+    if(runningTimeSec < 10)lcd.print("0");
+    lcd.print(runningTimeMin);
+    lcd.print(":");
+    if(runningTimeSec < 10)lcd.print("0");
+    lcd.print(runningTimeSec);
 }
 
 void getDateDs1307(byte *second, byte *minute,byte *hour,byte *dayOfWeek,byte *dayOfMonth,byte *month, byte *year)
