@@ -78,7 +78,7 @@ volatile int runningTimeMin = 0;
 volatile int runningTimeSec = 60;
 volatile unsigned long locTime = 0;
 volatile unsigned long oldSec = 0;
-
+volatile bool blink = false;
 
 void page0_draw();
 void page0_plus();
@@ -97,9 +97,9 @@ void readButtons();
 int button(int pinNr);
 
 static page_t Pages[] = {
-        {"startseite",0,0,0, &page0_draw, &page0_plus, &page0_minus, &page0_enter, &page0_longEnter},
+        {"startseite",   0,0,0, &page0_draw, &page0_plus, &page0_minus, &page0_enter, &page0_longEnter},
         {"timer stellen",0,0,0, &page1_draw, &page1_plus, &page1_minus, &page1_enter, &page1_longEnter}, 
-        {"uhr stellen", 0,0,0, &page2_draw, &page2_plus, &page2_minus, &page2_enter, &page2_longEnter}
+        {"uhr stellen",  0,0,0, &page2_draw, &page2_plus, &page2_minus, &page2_enter, &page2_longEnter}
       };
 
 int pageCount = sizeof(Pages)/sizeof(Pages[0]);
@@ -225,6 +225,11 @@ ISR(TIMER1_COMPA_vect) {
       runningTimeSec = 59;
     }
   }
+
+  blink = !blink;
+  if (!running) {
+    displayMenu(activePage);
+  }
 }
 
 void getDateDs1307(byte *second, byte *minute,byte *hour,byte *dayOfWeek,byte *dayOfMonth,byte *month, byte *year) {
@@ -233,7 +238,7 @@ void getDateDs1307(byte *second, byte *minute,byte *hour,byte *dayOfWeek,byte *d
   Wire.write(0);
   Wire.endTransmission();
 
-  Wire.requestFrom(DS1307_I2C_ADDRESS, 7);
+  Wire.requestFrom(DS1307_I2C_ADDRESS, 7, true);
 
   // A few of these need masks,, because certain bits are control bits
   *second = bcdToDec(Wire.read() & 0x7f);
@@ -243,6 +248,7 @@ void getDateDs1307(byte *second, byte *minute,byte *hour,byte *dayOfWeek,byte *d
   *dayOfMonth = bcdToDec(Wire.read());
   *month = bcdToDec(Wire.read());
   *year = bcdToDec(Wire.read());
+
 }
 
 byte bcdToDec(byte val) {
@@ -267,7 +273,8 @@ void displayCountdown() {
     
     if (runningTimeSec < 10) lcd.print("0");
     lcd.print(runningTimeSec);
-    lcd.print(" ");
+    lcd.print(" >");
+
 }
 
 int button(int pinNr) {
@@ -290,7 +297,7 @@ void readButtons() {
   int ret1 = button(BUTTON1_PIN);
   int ret2 = button(BUTTON2_PIN);
   int ret3 = button(BUTTON3_PIN);
-  
+
   if (ret1 == 1 || ret1 == 2) {
     Pages[activePage].Plus();
   }
@@ -454,10 +461,21 @@ void pciSetup(byte pin) {
     
     lcd.setCursor(Pages[activePage].posX, Pages[activePage].posY+1);
     char lcd_buffer[130];    
-    sprintf(lcd_buffer,"%02i:%02i Uhr",wtimer.hour, wtimer.minute);
+    
+    if (blink) {
+      sprintf(lcd_buffer,"%02i:%02i Uhr",wtimer.hour, wtimer.minute);
+    } else {
+      
+      if(timerDigit==0) {
+        sprintf(lcd_buffer,"  :%02i Uhr",wtimer.minute);
+      } else {
+        sprintf(lcd_buffer,"%02i:   Uhr",wtimer.hour);
+      }
+    }
     lcd.print(lcd_buffer);
     
     lcd.setCursor(Pages[activePage].posX+1, Pages[activePage].posY+1);
+
   }
 /**************************/
 /**************************/
@@ -515,11 +533,11 @@ void pciSetup(byte pin) {
 
 
   void page2_draw() {
-    byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-    getDateDs1307(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+    
+    if (clockEdit == false) {
+      byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+      getDateDs1307(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
 
-    if (clockEdit == false)
-    {
       ctimer.hour = hour;
       ctimer.minute = minute;
       ctimer.second = second;
@@ -532,8 +550,20 @@ void pciSetup(byte pin) {
 
     lcd.setCursor(Pages[activePage].posX, Pages[activePage].posY+1);
     char lcd_buffer[130];    
-    sprintf(lcd_buffer,"%02i:%02i:%02i Uhr", ctimer.hour, ctimer.minute, ctimer.second);
+    
+    if (blink) {
+      sprintf(lcd_buffer,"%02i:%02i:%02i Uhr", ctimer.hour, ctimer.minute, ctimer.second);
+    } else {
+      if (clockDigit == 0) {
+        sprintf(lcd_buffer,"  :%02i:%02i Uhr", ctimer.minute, ctimer.second);
+      } else if (clockDigit == 1) {
+        sprintf(lcd_buffer,"%02i:  :%02i Uhr", ctimer.hour, ctimer.second);
+      } else {
+        sprintf(lcd_buffer,"%02i:%02i:   Uhr", ctimer.hour, ctimer.minute );
+      }
+    }
     lcd.print(lcd_buffer);
+    
   }
 
   void saveTime() {
