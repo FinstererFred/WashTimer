@@ -52,6 +52,9 @@ typedef struct dauer_t {
   String name;
 };
 
+
+
+
 static dauer_t Programm[3] = {
           {0,2, "Kurzwaesche"},
           {1,05, "Buntwaesche"},
