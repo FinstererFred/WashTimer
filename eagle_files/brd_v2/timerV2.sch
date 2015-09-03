@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.4">
+<eagle version="6.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -8794,12 +8794,12 @@ Source: www.kingbright.com</description>
 <part name="R5" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
 <part name="R8" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
 <part name="CON1" library="pinhead" deviceset="PINHD-2X5" device=""/>
-<part name="R7" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="R9" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="R14" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="R15" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="R16" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="R17" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
+<part name="R7" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
+<part name="R9" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
+<part name="R14" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
+<part name="R15" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
+<part name="R16" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
+<part name="R17" library="eagle-ltspice" deviceset="R" device="R0603" value="10k"/>
 <part name="GND10" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
@@ -8865,8 +8865,8 @@ Source: www.kingbright.com</description>
 <instance part="R14" gate="G$1" x="-7.62" y="134.62"/>
 <instance part="R15" gate="G$1" x="-7.62" y="129.54"/>
 <instance part="R16" gate="G$1" x="-7.62" y="124.46"/>
-<instance part="R17" gate="G$1" x="-20.32" y="172.72"/>
-<instance part="GND10" gate="1" x="-10.16" y="170.18" rot="R90"/>
+<instance part="R17" gate="G$1" x="-22.86" y="170.18"/>
+<instance part="GND10" gate="1" x="-15.24" y="170.18" rot="R90"/>
 </instances>
 <busses>
 </busses>
@@ -8991,7 +8991,6 @@ Source: www.kingbright.com</description>
 <segment>
 <pinref part="R17" gate="G$1" pin="2"/>
 <pinref part="GND10" gate="1" pin="GND"/>
-<wire x1="-12.7" y1="170.18" x2="-15.24" y2="172.72" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$33" class="0">
@@ -9185,14 +9184,12 @@ Source: www.kingbright.com</description>
 <segment>
 <pinref part="U1" gate="A" pin="PB1"/>
 <wire x1="-106.68" y1="96.52" x2="-81.28" y2="96.52" width="0.1524" layer="91"/>
-<wire x1="-106.68" y1="96.52" x2="-106.68" y2="180.34" width="0.1524" layer="91"/>
-<wire x1="-106.68" y1="180.34" x2="-27.94" y2="180.34" width="0.1524" layer="91"/>
-<wire x1="-27.94" y1="180.34" x2="-27.94" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="-106.68" y1="96.52" x2="-106.68" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="-106.68" y1="170.18" x2="-27.94" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="-27.94" y1="170.18" x2="-27.94" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="-27.94" y1="154.94" x2="-12.7" y2="154.94" width="0.1524" layer="91"/>
 <pinref part="CON1" gate="A" pin="5"/>
 <pinref part="R17" gate="G$1" pin="1"/>
-<wire x1="-25.4" y1="172.72" x2="-25.4" y2="180.34" width="0.1524" layer="91"/>
-<wire x1="-25.4" y1="180.34" x2="-27.94" y2="180.34" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$8" class="0">
@@ -9458,10 +9455,6 @@ Source: www.kingbright.com</description>
 </nets>
 </sheet>
 </sheets>
-<errors>
-<approved hash="115,1,-64.9012,153.628,PROG,,,,,"/>
-<approved hash="115,1,-135.361,83.82,Q1,,,,,"/>
-</errors>
 </schematic>
 </drawing>
 </eagle>
