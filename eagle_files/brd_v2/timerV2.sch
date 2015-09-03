@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.5.0">
+<eagle version="6.4">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -8795,7 +8795,6 @@ Source: www.kingbright.com</description>
 <part name="R8" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
 <part name="CON1" library="pinhead" deviceset="PINHD-2X5" device=""/>
 <part name="R7" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
-<part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="R9" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
 <part name="R14" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
 <part name="R15" library="eagle-ltspice" deviceset="R" device="R0603" value="105"/>
@@ -8862,7 +8861,6 @@ Source: www.kingbright.com</description>
 <instance part="R8" gate="G$1" x="-43.18" y="132.08" rot="R90"/>
 <instance part="CON1" gate="A" x="-10.16" y="154.94"/>
 <instance part="R7" gate="G$1" x="-7.62" y="144.78"/>
-<instance part="GND4" gate="1" x="2.54" y="137.16" rot="R90"/>
 <instance part="R9" gate="G$1" x="-7.62" y="139.7"/>
 <instance part="R14" gate="G$1" x="-7.62" y="134.62"/>
 <instance part="R15" gate="G$1" x="-7.62" y="129.54"/>
@@ -8991,24 +8989,6 @@ Source: www.kingbright.com</description>
 <wire x1="17.78" y1="154.94" x2="-5.08" y2="154.94" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="R7" gate="G$1" pin="2"/>
-<pinref part="GND4" gate="1" pin="GND"/>
-<wire x1="-2.54" y1="144.78" x2="0" y2="144.78" width="0.1524" layer="91"/>
-<wire x1="0" y1="144.78" x2="0" y2="139.7" width="0.1524" layer="91"/>
-<pinref part="R9" gate="G$1" pin="2"/>
-<wire x1="0" y1="139.7" x2="0" y2="137.16" width="0.1524" layer="91"/>
-<wire x1="-2.54" y1="139.7" x2="0" y2="139.7" width="0.1524" layer="91"/>
-<pinref part="R14" gate="G$1" pin="2"/>
-<wire x1="-2.54" y1="134.62" x2="0" y2="134.62" width="0.1524" layer="91"/>
-<wire x1="0" y1="134.62" x2="0" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="R15" gate="G$1" pin="2"/>
-<wire x1="-2.54" y1="129.54" x2="0" y2="129.54" width="0.1524" layer="91"/>
-<wire x1="0" y1="129.54" x2="0" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="R16" gate="G$1" pin="2"/>
-<wire x1="-2.54" y1="124.46" x2="0" y2="124.46" width="0.1524" layer="91"/>
-<wire x1="0" y1="124.46" x2="0" y2="129.54" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="R17" gate="G$1" pin="2"/>
 <pinref part="GND10" gate="1" pin="GND"/>
 <wire x1="-12.7" y1="170.18" x2="-15.24" y2="172.72" width="0.1524" layer="91"/>
@@ -9109,6 +9089,23 @@ Source: www.kingbright.com</description>
 <wire x1="10.16" y1="157.48" x2="-5.08" y2="157.48" width="0.1524" layer="91"/>
 <label x="10.16" y="157.48" size="1.778" layer="95" xref="yes"/>
 <pinref part="CON1" gate="A" pin="4"/>
+</segment>
+<segment>
+<pinref part="R7" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="144.78" x2="0" y2="144.78" width="0.1524" layer="91"/>
+<wire x1="0" y1="144.78" x2="0" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="139.7" x2="0" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="R14" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="134.62" x2="0" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="0" y1="134.62" x2="0" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="R15" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="129.54" x2="0" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="0" y1="129.54" x2="0" y2="134.62" width="0.1524" layer="91"/>
+<pinref part="R16" gate="G$1" pin="2"/>
+<wire x1="-2.54" y1="124.46" x2="0" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="0" y1="124.46" x2="0" y2="129.54" width="0.1524" layer="91"/>
+<label x="0" y="144.78" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$5" class="0">
